@@ -36,22 +36,31 @@ import java.util.List;
  * dislikes 中每一组都 不同
  *
  */
-class Solution9 {
+public class Solution9 {
+
+    private boolean[] visited;
+    private int[] group;
 
     public boolean possibleBipartition(int n, int[][] dislikes) {
-        int[] fa = new int[n + 1];
-        Arrays.fill(fa, -1);
-        List<Integer>[] g = new List[n + 1];
-        for (int i = 0; i < n; ++i) {
-            g[i] = new ArrayList<Integer>();
-        }
-        for (int[] p : dislikes)
-            g[p[0]].add(p[1]);
-            g[p[1]].add(p[0]);
+        // 初始化visited和group数组
+        visited = new boolean[n + 1];
+        group = new int[n + 1];
+        Arrays.fill(group, -1);
+
+        // 构建邻接表
+        List<Integer>[] graph = new ArrayList[n + 1];
         for (int i = 1; i <= n; ++i) {
-            for (int j = 0; j < g[i].size(); ++j) {
-                unit(g[i].get(0), g[i].get(j), fa);
-                if (isconnect(i, g[i].get(j), fa)) {
+            graph[i] = new ArrayList<>();
+        }
+        for (int[] dislike : dislikes) {
+            graph[dislike[0]].add(dislike[1]);
+            graph[dislike[1]].add(dislike[0]);
+        }
+
+        // 对每个节点进行DFS
+        for (int i = 1; i <= n; ++i) {
+            if (!visited[i]) {
+                if (!dfs(graph, i, 1)) {
                     return false;
                 }
             }
@@ -59,28 +68,17 @@ class Solution9 {
         return true;
     }
 
-    public void unit(int x, int y, int[] fa) {
-        x = findFa(x, fa);
-        y = findFa(y, fa);
-        if (x == y) {
-            return ;
+    private boolean dfs(List<Integer>[] graph, int node, int currGroup) {
+        if (group[node] != -1) {
+            return group[node] == currGroup;
         }
-        if (fa[x] <= fa[y]) {
-            int temp = x;
-            x = y;
-            y = temp;
+        group[node] = currGroup;
+        visited[node] = true;
+        for (int neighbor : graph[node]) {
+            if (!dfs(graph, neighbor, 1 - currGroup)) {
+                return false;
+            }
         }
-        fa[x] += fa[y];
-        fa[y] = x;
-    }
-
-    public boolean isconnect(int x, int y, int[] fa) {
-        x = findFa(x, fa);
-        y = findFa(y, fa);
-        return x == y;
-    }
-
-    public int findFa(int x, int[] fa) {
-        return fa[x] > 0 ? x : (fa[x] = findFa(fa[x], fa));
+        return true;
     }
 }
